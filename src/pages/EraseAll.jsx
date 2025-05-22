@@ -1,5 +1,36 @@
 import { Calendar, Trash2, Shield, Database } from 'lucide-react';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import API_BASE_URL from "../config/api"; // Make sure this path is correct
+
 const EraseAll = () => {
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleErase = async () => {
+    if (!startDate || !endDate) {
+      alert("Please select both start and end dates.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/transactions/delete-range`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate, endDate }),
+      });
+      if (!response.ok) throw new Error("Failed to erase data");
+      alert("Data erased successfully!");
+      navigate("/");
+    } catch (err) {
+      alert("Failed to erase data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="p-6 bg-gray-900 min-h-screen text-white">
       <div className="text-center mb-8">
@@ -24,11 +55,20 @@ const EraseAll = () => {
               </label>
               <div className="relative">
                 <input
-                  type="text"
-                  placeholder="dd-mm-yyyy"
-                  className="w-full py-2 px-4 bg-gray-700 border border-gray-600 rounded-md text-white focus:ring-red-500 focus:border-red-500"
+                  type="date"
+                  className="w-full py-2 px-4 bg-gray-700 border border-gray-600 rounded-md text-white focus:ring-red-500 focus:border-red-500 pr-10"
+                  id="start-date"
+                  value={startDate}
+                  onChange={e => setStartDate(e.target.value)}
                 />
-                <Calendar className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
+                <button
+                  type="button"
+                  className="absolute right-3 top-2.5"
+                  onClick={() => document.getElementById('start-date').showPicker?.()}
+                  tabIndex={-1}
+                >
+                  <Calendar className="h-5 w-5 text-gray-400 pointer-events-none" />
+                </button>
               </div>
             </div>
             <div>
@@ -37,20 +77,36 @@ const EraseAll = () => {
               </label>
               <div className="relative">
                 <input
-                  type="text"
-                  placeholder="dd-mm-yyyy"
-                  className="w-full py-2 px-4 bg-gray-700 border border-gray-600 rounded-md text-white focus:ring-red-500 focus:border-red-500"
+                  type="date"
+                  className="w-full py-2 px-4 bg-gray-700 border border-gray-600 rounded-md text-white focus:ring-red-500 focus:border-red-500 pr-10"
+                  id="end-date"
+                  value={endDate}
+                  onChange={e => setEndDate(e.target.value)}
                 />
-                <Calendar className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
+                <button
+                  type="button"
+                  className="absolute right-3 top-2.5"
+                  onClick={() => document.getElementById('end-date').showPicker?.()}
+                  tabIndex={-1}
+                >
+                  <Calendar className="h-5 w-5 text-gray-400 pointer-events-none" />
+                </button>
               </div>
             </div>
           </div>
           <div className="flex flex-wrap gap-4">
-            <button className="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 flex items-center gap-2">
+            <button
+              className="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 flex items-center gap-2"
+              onClick={handleErase}
+              disabled={loading}
+            >
               <Trash2 className="h-5 w-5" />
-              Erase Selected Data
+              {loading ? "Erasing..." : "Erase Selected Data"}
             </button>
-            <button className="bg-gray-700 text-gray-300 px-6 py-2 rounded-md hover:bg-gray-600">
+            <button
+              className="bg-gray-700 text-gray-300 px-6 py-2 rounded-md hover:bg-gray-600"
+              onClick={() => { setStartDate(""); setEndDate(""); }}
+            >
               Reset Selection
             </button>
           </div>
