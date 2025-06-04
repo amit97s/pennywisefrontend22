@@ -27,32 +27,41 @@ const AddNew = () => {
     const isDuplicate = users.some(user => 
       user.name.toLowerCase() === formData.name.toLowerCase()
     );
+
     if (isDuplicate) {
-      alert('An account with this name already exists!');
+      alert('An account with this name already exists. Please use a different name.');
       return;
     }
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
-      if (response.ok) {
-        setFormData({
-          name: '',
-          category: 'creditor',
-          group: 'cash-in-hand',
-          amount: ''
-        });
-        fetchUsers();
-      } else {
-        throw new Error('Failed to add account');
+
+      if (!response.ok) {
+        const error = await response.json();
+        if (error.code === 11000) { // MongoDB duplicate key error
+          alert('An account with this name already exists. Please use a different name.');
+          return;
+        }
+        throw new Error('Failed to create account');
       }
+
+      const result = await response.json();
+      alert('Account created successfully!');
+      setFormData({
+        name: '',
+        category: 'creditor',
+        group: 'cash-in-hand',
+        amount: ''
+      });
     } catch (error) {
-      console.error('Error adding account:', error);
-      alert('Failed to add account. Please try again.');
+      console.error('Error:', error);
+      alert('Failed to create account. Please try again.');
     }
   };
 
